@@ -7,8 +7,10 @@ import surveillance as surv
 
 if __name__=="__main__":
 
-    Do_Part_4 = True
+    Do_Part_4 = False
     Do_Part_5 = False
+    Do_Part_6 = True
+    AM =  '03116045'
 
     Video_path = 'data/VIRAT_S_010000_03_000442_000528.mp4'
 
@@ -35,17 +37,25 @@ if __name__=="__main__":
     #testing Parameters
 
 
+#part 5. Better following of the points and occasional refreshing of the points we follow
+
     if Do_Part_5:
         # Parameters for Shi-Tomasi corner detection
-        st_feature_params = dict(maxCorners = 3000, qualityLevel = 0.08, minDistance = 1, blockSize = 4)
+        feature_params = dict(maxCorners = 2400, qualityLevel = 0.12, minDistance = 2, blockSize = 7, useHarrisDetector=1)
         # Parameters for Harris corner detection
-        h_feature_params = dict(blockSize = 6, ksize = 3, k=0.18)
+        st_feature_params = dict(maxCorners = 2000, qualityLevel = 0.1, minDistance = 5, blockSize = 7)
         # Parameters for Lucas Kanade optical flow field algorithm
-        lk_params = dict(winSize = (15,15), maxLevel = 4, criteria = (cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 0.03))
+        lk_params = dict(winSize = (10,10), maxLevel = 4, criteria = (cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 0.03))
         cap = cv2.VideoCapture(Video_path)
-        surv.lk5(cap, "harris", h_feature_params, lk_params, 'data/out5_st.avi', save_vid = False)
+        surv.lk5(cap, "st", st_feature_params, lk_params, 'data/out5_st.avi', save_vid = False)
 
 
-
-
-    #part 5. Better following of the points and occasional refreshing of the points we follow
+    if Do_Part_6:
+        # Parameters for Shi-Tomasi corner detection
+        feature_params = dict(maxCorners = 2400, qualityLevel = 0.12, minDistance = 2, blockSize = 7, useHarrisDetector=1)
+        # Parameters for Harris corner detection
+        st_feature_params = dict(maxCorners = 2000, qualityLevel = 0.1, minDistance = 5, blockSize = 7)
+        # Parameters for Lucas Kanade optical flow field algorithm
+        lk_params = dict(winSize = (10,10), maxLevel = 4, criteria = (cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 0.03))
+        cap = cv2.VideoCapture(Video_path)
+        surv.lk6(cap, "st", st_feature_params, lk_params, 'data/out6_st.avi', save_vid = False, AM=AM)
