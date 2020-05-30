@@ -25,11 +25,13 @@ def lk4(cap, type , detect_params, lk_params, Video_out_path, save_vid = False):
     #Create video writer in order to store the video if save_vid == True
     size = (prev_gray.shape[1],prev_gray.shape[0])
     out_vid = cv2.VideoWriter(Video_out_path, cv2.VideoWriter_fourcc(*'DIVX'), fps, size)
-
+    frame_index=1
     while (cap.isOpened() and cap.get(cv2.CAP_PROP_POS_FRAMES) < Nframe):
 
       # Frame reading and processing of size and color space
       ret, frame = cap.read()
+      if frame_index % 10 ==0:
+          mask=np.zeros_like(mask)
 
       frame = cv2.resize(frame, (int(frame.shape[1]/2), int(frame.shape[0]/2)))
       gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
@@ -42,7 +44,7 @@ def lk4(cap, type , detect_params, lk_params, Video_out_path, save_vid = False):
       # Selects good feature points for next position
       good_new = next[status == 1]
 
-      frame, mask = draw.draw_optfl(good_new, good_old, frame.copy(), mask, True)
+      frame, mask = draw.draw_optfl(good_new, good_old, frame.copy(), mask, only_motion=False)
 
       # Overlays the optical flow tracks on the original frame
       output = cv2.add(frame, mask)
@@ -51,6 +53,7 @@ def lk4(cap, type , detect_params, lk_params, Video_out_path, save_vid = False):
       # Updates previous good feature points
       prev_points = good_new.reshape(-1, 1, 2)
 
+      frame_index += 1
       # Opens a new window and displays the output frame
       cv2.imshow("sparse optical flow", output)
       if save_vid:
@@ -85,7 +88,7 @@ def lk5(cap, type , detect_params, lk_params, Video_out_path, save_vid = False):
     size = (prev_gray.shape[1],prev_gray.shape[0])
     out_vid = cv2.VideoWriter(Video_out_path, cv2.VideoWriter_fourcc(*'DIVX'), fps, size)
 
-    # recompute features
+    # recompute features ante ta leme meta se
     frame_index =  1
     while (cap.isOpened() and cap.get(cv2.CAP_PROP_POS_FRAMES) < Nframe):
 
@@ -97,6 +100,7 @@ def lk5(cap, type , detect_params, lk_params, Video_out_path, save_vid = False):
 
       if frame_index % 10 == 0:
           prev_points = DT.detect_corners(prev_gray, detect_params, type)
+          mask = np.zeros_like(mask)
           #time_mask[prev_points.reshape((prev_points.shape[0],prev_points.shape[2]))] += 1
       # Lucas Kanade algorithm
       next, status, error = cv2.calcOpticalFlowPyrLK(prev_gray, gray, prev_points.astype(np.float32), None, **lk_params)
@@ -106,7 +110,7 @@ def lk5(cap, type , detect_params, lk_params, Video_out_path, save_vid = False):
       # Selects good feature points for next position
       good_new = next[status == 1]
 
-      frame, mask = draw.draw_optfl(good_new, good_old, frame.copy(), mask, only_motion=True)
+      frame, mask = draw.draw_optfl(good_new, good_old, frame.copy(),(mask), only_motion=True)
       #time_mask[time_mask > 0] += 1
       #mask = draw.update(mask, time_mask)
       # Overlays the optical flow tracks on the original frame
@@ -165,16 +169,19 @@ def lk6(cap, type , detect_params, lk_params, Video_out_path, save_vid = False, 
         frame = cv2.resize(frame, (int(frame.shape[1]/2), int(frame.shape[0]/2)))
         #insert salt & pepper noise to the frame
         #print(frame)
-        frame[:,:,0] = (255*random_noise(frame[:,:,0], mode='s&p',  amount=amount)).astype('uint8')
-        frame[:,:,1] = (255*random_noise(frame[:,:,1], mode='s&p',  amount=amount)).astype('uint8')
-        frame[:,:,2] = (255*random_noise(frame[:,:,2], mode='s&p',  amount=amount)).astype('uint8')
+        frame[:,:,0] = (255*random_noise(frame[:,:,0], mode='s&p',  seed= seed, amount=amount)).astype('uint8')
+        frame[:,:,1] = (255*random_noise(frame[:,:,1], mode='s&p', seed= seed, amount=amount)).astype('uint8')
+        frame[:,:,2] = (255*random_noise(frame[:,:,2], mode='s&p', seed= seed, amount=amount)).astype('uint8')
         #frame = 255*random_noise(frame, mode='s&p', seed=seed, amount=0.1).astype('uint8')
-        frame = noise.denoise(frame)
+        #frame = noise.denoise(frame)
 
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
         if frame_index % 10 == 0:
+           mask = np.zeros_like(mask)
+        if frame_index % 10 == 0:
            prev_points = DT.detect_corners(prev_gray, detect_params, type)
+
            #time_mask[prev_points.reshape((prev_points.shape[0],prev_points.shape[2]))] += 1
         # Lucas Kanade algorithm
         next, status, error = cv2.calcOpticalFlowPyrLK(prev_gray, gray, prev_points.astype(np.float32), None, **lk_params)
@@ -231,6 +238,7 @@ def lk7(cap, type , detect_params, lk_params, Video_out_path, save_vid = False, 
     out_vid = cv2.VideoWriter(Video_out_path, cv2.VideoWriter_fourcc(*'DIVX'), fps, size)
 
     # recompute features
+    #queue = queue.Queue()
     frame_index =  1
     while (cap.isOpened() and cap.get(cv2.CAP_PROP_POS_FRAMES) < Nframe):
 
@@ -240,18 +248,21 @@ def lk7(cap, type , detect_params, lk_params, Video_out_path, save_vid = False, 
         frame = cv2.resize(frame, (int(frame.shape[1]/2), int(frame.shape[0]/2)))
         #insert salt & pepper noise to the frame
         #print(frame)
-        frame[:,:,0] = (255*random_noise(frame[:,:,0], mode='s&p',  amount=amount)).astype('uint8')
-        frame[:,:,1] = (255*random_noise(frame[:,:,1], mode='s&p',  amount=amount)).astype('uint8')
-        frame[:,:,2] = (255*random_noise(frame[:,:,2], mode='s&p',  amount=amount)).astype('uint8')
+        frame[:,:,0] = (255*random_noise(frame[:,:,0], mode='s&p',  seed=seed, amount=amount)).astype('uint8')
+        frame[:,:,1] = (255*random_noise(frame[:,:,1], mode='s&p', seed=seed, amount=amount)).astype('uint8')
+        frame[:,:,2] = (255*random_noise(frame[:,:,2], mode='s&p', seed=seed, amount=amount)).astype('uint8')
         #frame = 255*random_noise(frame, mode='s&p', seed=seed, amount=0.1).astype('uint8')
-
+        frame = noise.denoise(frame)
 
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
-        if frame_index % 10 == 0:
+        if frame_index % 20 == 0:
            prev_points = DT.detect_corners(prev_gray, detect_params, type)
+        if frame_index % 10 ==0:   
+           mask = np.zeros_like(mask)
            #time_mask[prev_points.reshape((prev_points.shape[0],prev_points.shape[2]))] += 1
         # Lucas Kanade algorithm
+
         next, status, error = cv2.calcOpticalFlowPyrLK(prev_gray, gray, prev_points.astype(np.float32), None, **lk_params)
 
         # Selects good feature points for previous position
@@ -260,6 +271,8 @@ def lk7(cap, type , detect_params, lk_params, Video_out_path, save_vid = False, 
         good_new = next[status == 1]
 
         frame, mask = draw.draw_optfl(good_new, good_old, frame.copy(), mask, only_motion=True)
+        #q.put(mask)
+
         #time_mask[time_mask > 0] += 1
         #mask = draw.update(mask, time_mask)
         # Overlays the optical flow tracks on the original frame

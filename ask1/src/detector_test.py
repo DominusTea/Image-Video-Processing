@@ -1,7 +1,8 @@
 import numpy as np
 import cv2
+import matplotlib.pyplot as plt
 
-def display_corners(corn_arr, rgb_arr, displ=False):
+def display_corners(corn_arr, rgb_arr, displ=False, save=False, path='', title = ''):
     '''
     displays (in red color) corners from corn_arr in rgb frame in rgb_arr.
     supports cv2.goodFeaturesToTrack sizing : (numofcorners , 1, 2)
@@ -17,9 +18,15 @@ def display_corners(corn_arr, rgb_arr, displ=False):
 
 
 
-
     if displ:
-        cv2.imshow('dst',corners_rgb)
+        cv2.imshow(title, corners_rgb)
+        fig = plt.figure()
+        plt.imshow(cv2.cvtColor(corners_rgb, cv2.COLOR_BGR2RGB))
+        plt.title(title, color='b')
+        plt.savefig(path,bbox_inches='tight', dpi=600)
+        if save:
+            #cv2.imwrite(path, corners_rgb)
+            print('a')
         if cv2.waitKey(0) & 0xff == 27:
             cv2.destroyAllWindows()
 
@@ -60,7 +67,7 @@ def detect_corners(frame, params, type="harris", prt=False):
         raise ValueError('type should one of ["harris", "st"]')
 
     if prt:
-        display_corners(points, frame, type, displ=True)
+        display_corners(points, frame,  displ=True)
 
     return points
 
@@ -73,13 +80,12 @@ if __name__=="__main__":
     '''
     Video_path = 'data/VIRAT_S_010000_03_000442_000528.mp4'
     # Parameters for Shi-Tomasi corner detection
-    st_feature_params = dict(maxCorners = 3000, qualityLevel = 0.08, minDistance = 2, blockSize = 4)
-    # Parameters for Harris corner detection
-    h_feature_params = dict(blockSize = 6, ksize = 3, k=0.18)
+    st_feature_params = dict(maxCorners = 2000, qualityLevel = 0.1, minDistance = 2, blockSize = 7)    # Parameters for Harris corner detection
+    h_feature_params = dict(maxCorners = 2400, qualityLevel = 0.08, minDistance = 2, blockSize = 7, useHarrisDetector=1)
 
     cap = cv2.VideoCapture(Video_path)
     ret, first_frame = cap.read()
-    print(first_frame.shape)
+    print("first frame shape " + str(first_frame.shape))
     first_frame = cv2.resize(first_frame, (int(first_frame.shape[1]/2), int(first_frame.shape[0]/2)))
 
     first_frame_gray = cv2.cvtColor(first_frame, cv2.COLOR_BGR2GRAY)
@@ -87,5 +93,12 @@ if __name__=="__main__":
 
     harris_corners = detect_corners(first_frame_gray, h_feature_params, type="harris")
     st_corners = detect_corners(first_frame_gray, st_feature_params, type="st")
-    display_corners(harris_corners, first_frame , displ=True)
-    display_corners(st_corners, first_frame, displ=True)
+    display_corners(harris_corners, first_frame , displ=True, save=True, path="data/detector_harris_opt.png", \
+                    title='Harris detector using maxCorners = ' + str(h_feature_params['maxCorners']) + ' , qualityLevel = ' + \
+                    str(h_feature_params['qualityLevel']) + ', \n minDistance = ' + str(h_feature_params['minDistance'])\
+                + ', blockSize = ' + str(h_feature_params['blockSize']))
+    #print("sfsfs")
+    display_corners(st_corners, first_frame, displ=True, save=True, path="data/detector_st_opt_test.png", \
+                    title='Shai-Tomasi detector using maxCorners = ' + str(st_feature_params['maxCorners']) + ' , qualityLevel = ' + \
+                    str(st_feature_params['qualityLevel']) + ', \n minDistance = ' + str(st_feature_params['minDistance'])\
+                + ', blockSize = ' + str(st_feature_params['blockSize']))
