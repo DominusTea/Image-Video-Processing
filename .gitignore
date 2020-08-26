@@ -2,3 +2,5 @@
 *.mp4
 *.png
 *.zip
+ask2/models/
+*.h5
